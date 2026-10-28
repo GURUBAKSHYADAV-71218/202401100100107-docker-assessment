@@ -1,0 +1,97 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FestPass | Event Registration</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; background: #f3f6fb; color: #172033; }
+    header { background: #172554; color: white; padding: 24px; text-align: center; }
+    main { max-width: 760px; margin: 32px auto; padding: 0 16px; }
+    section { background: white; padding: 24px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 18px #17255412; }
+    h2 { margin-top: 0; }
+    label { display: block; margin: 12px 0 6px; }
+    input, button { width: 100%; padding: 12px; border-radius: 7px; font-size: 16px; }
+    input { border: 1px solid #cbd5e1; }
+    button { margin-top: 16px; border: 0; background: #2563eb; color: white; cursor: pointer; }
+    button:hover { background: #1d4ed8; }
+    #status { margin-top: 12px; }
+    li { padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
+    .muted { color: #64748b; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>FestPass</h1>
+    <p>Event Registration Portal</p>
+  </header>
+  <main>
+    <section>
+      <h2>Register for an Event</h2>
+      <form id="registration-form">
+        <label for="name">Full name</label>
+        <input id="name" name="name" required maxlength="100" placeholder="Enter your name">
+        <label for="event">Event name</label>
+        <input id="event" name="event" required maxlength="150" placeholder="Enter event name">
+        <button type="submit">Submit Registration</button>
+      </form>
+      <p id="status" role="status"></p>
+    </section>
+    <section>
+      <h2>Registrations</h2>
+      <button id="refresh" type="button">Refresh registrations</button>
+      <p id="count" class="muted">Loading...</p>
+      <ul id="registrations"></ul>
+    </section>
+  </main>
+  <script>
+    const form = document.querySelector("#registration-form");
+    const status = document.querySelector("#status");
+    const list = document.querySelector("#registrations");
+    const count = document.querySelector("#count");
+
+    async function loadRegistrations() {
+      try {
+        const response = await fetch("/api/registrations");
+        if (!response.ok) throw new Error("API returned " + response.status);
+        const rows = await response.json();
+        list.replaceChildren();
+        rows.forEach(row => {
+          const item = document.createElement("li");
+          item.textContent = `${row.name} — ${row.event}`;
+          list.appendChild(item);
+        });
+        count.textContent = `${rows.length} registration(s)`;
+      } catch (error) {
+        count.textContent = "Could not load registrations. Check backend connection.";
+      }
+    }
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      status.textContent = "Submitting...";
+      try {
+        const response = await fetch("/api/registrations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: form.name.value.trim(),
+            event: form.event.value.trim()
+          })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Registration failed");
+        status.textContent = "Registration successful!";
+        form.reset();
+        await loadRegistrations();
+      } catch (error) {
+        status.textContent = "Error: " + error.message;
+      }
+    });
+
+    document.querySelector("#refresh").addEventListener("click", loadRegistrations);
+    loadRegistrations();
+  </script>
+</body>
+</html>
