@@ -48,8 +48,21 @@
   <script>
     const form = document.querySelector("#registration-form");
     const status = document.querySelector("#status");
-    const list = document.querySelector("#registrations");
-    const count = document.querySelector("#count");
+    async function loadBackendVersion() {
+  const label = document.querySelector("#backend-version");
+
+  try {
+    const response = await fetch("/api/health");
+    if (!response.ok) throw new Error("Health check failed");
+
+    const health = await response.json();
+    label.textContent = `Backend version: ${health.version}`;
+  } catch {
+    label.textContent = "Backend version: unavailable";
+  }
+}
+
+loadBackendVersion();
 
     async function loadRegistrations() {
       try {
@@ -91,7 +104,23 @@
     });
 
     document.querySelector("#refresh").addEventListener("click", loadRegistrations);
-    loadRegistrations();
+     loadRegistrations();
+
+    async function loadBackendVersion() {
+      const label = document.querySelector("#backend-version");
+
+      try {
+        const response = await fetch("/api/health");
+        if (!response.ok) throw new Error("Health check failed");
+
+        const health = await response.json();
+        label.textContent = `Backend version: ${health.version}`;
+      } catch {
+        label.textContent = "Backend version: unavailable";
+      }
+    }
+
+    loadBackendVersion();
   </script>
 </body>
 </html>
